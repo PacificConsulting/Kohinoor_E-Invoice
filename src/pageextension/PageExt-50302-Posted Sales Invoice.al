@@ -297,7 +297,8 @@
         QRFileName: Text;
         URLResponse: HttpResponseMessage;
         CurrencyFactor: decimal;
-    //QRGenerator: Codeunit "QR Generator";
+        //QRGenerator: Codeunit "QR Generator";
+        GLSetup: Record "General Ledger Setup";
 
     //>>API Call Var
     //>>PCPL/NSW/EINV 052522
@@ -305,6 +306,8 @@
         //PCPL41-EINV
         //IF EInvoiceDetail.Get(Rec."No.") then
         //  Error('IRN No. is already generated for this document.');
+        GLSetup.Get();
+        GLSetup.TestField("Round of G/L Account");
         CLEAR(Natureofsupply);
         ExpCustomer.GET(Rec."Sell-to Customer No.");
         IF rec."GST Customer Type" = "GST Customer Type"::Export THEN BEGIN
@@ -582,14 +585,14 @@
                 */
                 IF rec."Currency Code" = '' THEN BEGIN //PCPL50
                     CLEAR(RoundOff);
-                    IF SalesInvoiceLine."No." = '400523' THEN
+                    IF SalesInvoiceLine."No." = GLSetup."Round of G/L Account" THEN
                         RoundOff := SalesInvoiceLine."Line Amount";
                 END
                 //PCPL50 begin
                 ELSE
                     IF (rec."Currency Code" <> '') OR (ExpCustomer."GST Customer Type" = ExpCustomer."GST Customer Type"::Export) THEN BEGIN
                         CLEAR(RoundOff);
-                        IF SalesInvoiceLine."No." = '400523' THEN
+                        IF SalesInvoiceLine."No." = GLSetup."Round of G/L Account" THEN
                             RoundOff := (SalesInvoiceLine."Line Amount" / rec."Currency Factor");
                     END;
                 //PCPL50 end
@@ -603,7 +606,7 @@
                     CurrencyFactor := rec."Currency Factor";
 
                 IF (ExpCustomer."GST Customer Type" <> ExpCustomer."GST Customer Type"::Export) THEN BEGIN //PCPL50
-                    IF (itemlist = '') AND (SalesInvoiceLine."No." <> '400523') THEN
+                    IF (itemlist = '') AND (SalesInvoiceLine."No." <> GLSetup."Round of G/L Account") THEN
                         itemlist := FORMAT(SalesInvoiceLine."Line No.") + '!' + DELCHR(FORMAT(Item.Description), '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)|®|™') + '!' + IsService + '!' + SalesInvoiceLine."HSN/SAC Code" + '!' + '' + '!' +
                         FORMAT(SalesInvoiceLine.Quantity) + '!' + '' + '!' + SalesInvoiceLine."Unit of Measure Code" + '!' + FORMAT(ROUND(SalesInvoiceLine."Unit Price", 0.01, '>')) + '!' +
                         FORMAT(ROUND(SalesInvoiceLine."Unit Price", 0.01, '>') * (SalesInvoiceLine.Quantity)/*SalesInvoiceLine."Line Amount"*/) + '!' + '0' + '!' + FORMAT(SalesInvoiceLine."Line Discount Amount") + '!' + FORMAT(TCSAMTLinewise) +
@@ -611,7 +614,7 @@
                         FORMAT(SGSTAmt) + '!' + FORMAT(cessrate) + '!' + FORMAT(CESSGSTAmt) + '!' + '0' + '!' + '0' + '!' + '0' + '!' + '0' + '!' + FORMAT(TotalItemValue) +
                         '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '' + '!' + ''
                     ELSE
-                        IF SalesInvoiceLine."No." <> '400523' THEN
+                        IF SalesInvoiceLine."No." <> GLSetup."Round of G/L Account" THEN
                             itemlist := itemlist + ';' + FORMAT(SalesInvoiceLine."Line No.") + '!' + DELCHR(FORMAT(Item.Description), '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)|®|™') + '!' + IsService + '!' + SalesInvoiceLine."HSN/SAC Code" +
                             '!' + '' + '!' + FORMAT(SalesInvoiceLine.Quantity) + '!' + '' + '!' + SalesInvoiceLine."Unit of Measure Code" + '!' +
                             FORMAT(ROUND(SalesInvoiceLine."Unit Price", 0.01, '>')) + '!' + FORMAT(ROUND(SalesInvoiceLine."Unit Price", 0.01, '>') * (SalesInvoiceLine.Quantity)/*SalesInvoiceLine."Line Amount"*/) + '!' + '0' + '!' +
@@ -622,7 +625,7 @@
                 END
                 ELSE
                     IF (rec."Currency Code" <> '') OR (ExpCustomer."GST Customer Type" = ExpCustomer."GST Customer Type"::Export) THEN BEGIN
-                        IF (itemlist = '') AND (SalesInvoiceLine."No." <> '400523') THEN
+                        IF (itemlist = '') AND (SalesInvoiceLine."No." <> GLSetup."Round of G/L Account") THEN
                             itemlist := FORMAT(SalesInvoiceLine."Line No.") + '!' + DELCHR(FORMAT(Item.Description), '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)|®|™') + '!' + IsService + '!' + SalesInvoiceLine."HSN/SAC Code" + '!' + '' + '!' +
                             FORMAT(SalesInvoiceLine.Quantity) + '!' + '' + '!' + SalesInvoiceLine."Unit of Measure Code" + '!' + FORMAT(ROUND((SalesInvoiceLine."Unit Price" / CurrencyFactor), 0.01, '>')) + '!' +
                             FORMAT((ROUND(SalesInvoiceLine."Unit Price", 0.01, '>') * (SalesInvoiceLine.Quantity)) / CurrencyFactor) + '!' + '0' + '!' + FORMAT(SalesInvoiceLine."Line Discount Amount" / CurrencyFactor) + '!' + FORMAT(TCSAMTLineWise / CurrencyFactor) +
@@ -630,7 +633,7 @@
                             FORMAT(SGSTAmt) + '!' + FORMAT(cessrate) + '!' + FORMAT(CESSGSTAmt) + '!' + '0' + '!' + '0' + '!' + '0' + '!' + '0' + '!' + FORMAT(TotalItemValue) +
                             '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '' + '!' + ''
                         ELSE
-                            IF SalesInvoiceLine."No." <> '400523' THEN
+                            IF SalesInvoiceLine."No." <> GLSetup."Round of G/L Account" THEN
                                 itemlist := itemlist + ';' + FORMAT(SalesInvoiceLine."Line No.") + '!' + DELCHR(FORMAT(Item.Description), '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)|®|™') + '!' + IsService + '!' + SalesInvoiceLine."HSN/SAC Code" +
                                 '!' + '' + '!' + FORMAT(SalesInvoiceLine.Quantity) + '!' + '' + '!' + SalesInvoiceLine."Unit of Measure Code" + '!' +
                                 FORMAT(ROUND((SalesInvoiceLine."Unit Price" / CurrencyFactor), 0.01, '>')) + '!' + FORMAT((ROUND(SalesInvoiceLine."Unit Price", 0.01, '>') * (SalesInvoiceLine.Quantity)) / CurrencyFactor) + '!' + '0' + '!' +
@@ -781,7 +784,7 @@
                                     //*********Download QR Image to local System*********//
                                     // DownloadFromStream(IntS, '', '', '', QRFileName);
                                 END else
-                                    Error('QR Response Error- %1', URLResponse.IsSuccessStatusCode);
+                                    Error('QR Response Error- %1', URLResponse.ReasonPhrase);
                             END else
                                 Error('QR Iamge Client Error %1', URLResponse.ReasonPhrase);
 

@@ -39,6 +39,11 @@ tableextension 50601 Gen_Led_setup_Einv extends "General Ledger Setup"
         {
             Description = 'PCPL-NSW-07';
         }
+        field(50017; "Round of G/L Account"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+            TableRelation = "G/L Account"."No.";
+        }
 
     }
 

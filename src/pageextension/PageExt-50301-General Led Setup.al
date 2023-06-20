@@ -46,6 +46,12 @@ pageextension 50601 General_led_Set_Ext extends "General Ledger Setup"
                     ApplicationArea = all;
                     //Editable = false;
                 }
+                field("Round of G/L Account"; Rec."Round of G/L Account")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the value of the Round of G/L Account field.';
+                }
+
 
             }
         }
