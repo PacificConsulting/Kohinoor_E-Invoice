@@ -245,6 +245,7 @@ pageextension 50603 "Posted_sales_CrMemo_ext EINV" extends "Posted Sales Credit 
         HttpHead: HttpHeaders;
         QRFileName: Text;
         URLResponse: HttpResponseMessage;
+        GLSetup: Record "General Ledger Setup";
     begin
         //PCPL41-EINV
         CLEAR(Natureofsupply);
@@ -479,10 +480,10 @@ pageextension 50603 "Posted_sales_CrMemo_ext EINV" extends "Posted Sales Credit 
                     UOM := SalesCrMemoLine."Unit of Measure Code";
 
                 CLEAR(RoundOff);
-                IF SalesCrMemoLine."No." = '400523' THEN
+                IF SalesCrMemoLine."No." = GLSetup."Round of G/L Account" THEN
                     RoundOff := SalesCrMemoLine."Line Amount";
 
-                IF (itemlist = '') AND (SalesCrMemoLine."No." <> '400523') THEN
+                IF (itemlist = '') AND (SalesCrMemoLine."No." <> GLSetup."Round of G/L Account") THEN
                     itemlist := FORMAT(SalesCrMemoLine."Line No.") + '!' + SalesCrMemoLine.Description + '!' + IsService + '!' + SalesCrMemoLine."HSN/SAC Code" + '!' + '' + '!' +
                     FORMAT(SalesCrMemoLine.Quantity) + '!' + '' + '!' + UOM + '!' + FORMAT(ROUND(SalesCrMemoLine."Unit Price", 0.01, '>')) + '!' +
                     FORMAT(SalesCrMemoLine."Line Amount") + '!' + '0' + '!' + FORMAT(SalesCrMemoLine."Line Discount Amount") + '!' + FORMAT(TCSAMTLinewise/*SalesCrMemoLine."TDS/TCS Amount"*/) +
@@ -490,7 +491,7 @@ pageextension 50603 "Posted_sales_CrMemo_ext EINV" extends "Posted Sales Credit 
                     FORMAT(SGSTAmt) + '!' + FORMAT(cessrate) + '!' + FORMAT(CESSGSTAmt) + '!' + '0' + '!' + '0' + '!' + '0' + '!' + '0' + '!' + FORMAT(TotalItemValue) +
                     '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '' + '!' + ''
                 ELSE
-                    IF SalesCrMemoLine."No." <> '400523' THEN
+                    IF SalesCrMemoLine."No." <> GLSetup."Round of G/L Account" THEN
                         itemlist := itemlist + ';' + FORMAT(SalesCrMemoLine."Line No.") + '!' + SalesCrMemoLine.Description + '!' + IsService + '!' + SalesCrMemoLine."HSN/SAC Code" +
                         '!' + '' + '!' + FORMAT(SalesCrMemoLine.Quantity) + '!' + '' + '!' + UOM + '!' +
                         /*FORMAT(ROUND(SalesCrMemoLine."Unit Price",0.01,'>'))*/FORMAT(GSTRate) + '!' + FORMAT(SalesCrMemoLine."Line Amount") + '!' + '0' + '!' +
@@ -508,6 +509,7 @@ UNTIL SalesCrMemoLine.NEXT = 0;
         //api code
         // JsonTokenResult := GetTokenRequest();
         //Message(JsonTokenResult);
+        /*
         if client.Get('https://pcazureeinvoiceintegrationuat.azurewebsites.net/api/GetToken' + JsonTokenResult, Response) then begin
             if Response.IsSuccessStatusCode() then begin
                 content := Response.Content;
@@ -518,7 +520,9 @@ UNTIL SalesCrMemoLine.NEXT = 0;
             end;
             // else
             //     Message('msg %1', Response.HttpStatusCode);
+            
         end;
+        */
         AccessToken := '67118f6bfaa1efedba09c90f9b2bc578e70f8468';
         JsonEinvObject.Add('baseURL', GeneralLedgerSetup."EINV Base URL");
         JsonEinvObject.Add('access_token', GeneralLedgerSetup."Access Token");
@@ -540,6 +544,7 @@ UNTIL SalesCrMemoLine.NEXT = 0;
         JsonEinvObject.Add('document_no', rec."No.");
 
         JsonEinvObject.WriteTo(EinvRequestTxt);
+        EinvRequestTxt := EinvRequestTxt.Replace('}}', '}');
         EinvRequestContent.WriteFrom(EinvRequestTxt);
         EinvRequestContent.GetHeaders(HttpHead);
 
@@ -552,13 +557,13 @@ UNTIL SalesCrMemoLine.NEXT = 0;
         JsonEinvObject.WriteTo(reqOStm);
         reqOStm.WriteText(EinvRequestTxt);
         reqInStm.ReadText(EinvRequestTxt);
-        DownloadFromStream(ReqInStm, '', '', '', FileName);
+        //DownloadFromStream(ReqInStm, '', '', '', FileName);
         clear(ReqtempBlob);//231122
                            //Message('File Download Request');
 
         //  CLEAR(EINVPos);
         //EINVPos := COPYSTR(result, 1, 8);
-        if client.Post('https://pcazureeinvoiceintegrationuat.azurewebsites.net/api/GenerateIRN', EinvRequestContent, EinvResponse) then begin
+        if client.Post(GeneralLedgerSetup."E-Invoice API Link", EinvRequestContent, EinvResponse) then begin
             if EinvResponse.IsSuccessStatusCode() then begin
                 Einvcontent := EinvResponse.Content;
                 Einvcontent.ReadAs(result);
@@ -607,8 +612,11 @@ UNTIL SalesCrMemoLine.NEXT = 0;
                     END ELSE
                         ERROR(result);
                 end
-                else
-                    Message('Einvoive Response Error %1', EinvResponse.HttpStatusCode);
+                else begin
+                    Einvcontent := EinvResponse.Content;
+                    Einvcontent.ReadAs(result);
+                    Error('E-Invoice Response: %1', result);
+                end;
             end;
 
         end;

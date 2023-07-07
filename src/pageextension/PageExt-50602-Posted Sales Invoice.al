@@ -114,26 +114,26 @@
                 end;
             }
 
-            // action("E-Way Page Open")
-            // {
-            //     Image = Open;
-            //     Promoted = true;
-            //     PromotedCategory = Process;
-            //     ApplicationArea = all;
-            //     Caption = 'Open E-way Bill Page';
-            //     trigger OnAction()
-            //     var
-            //         EwayPage: Page 50052;
-            //         SIH: Record 112;
-            //     begin
-            //         SIH.Reset();
-            //         SIH.SetRange("No.", rec."No.");
-            //         IF SIH.FindFirst() then begin
-            //             EwayPage.SetTableView(SIH);
-            //             EwayPage.RunModal();
-            //         end;
-            //     end;
-            // }
+            action("E-Way Page Open")
+            {
+                Image = Open;
+                Promoted = true;
+                PromotedCategory = Process;
+                ApplicationArea = all;
+                Caption = 'Open E-way Bill Page';
+                trigger OnAction()
+                var
+                    EwayPage: Page 50603;
+                    SIH: Record 112;
+                begin
+                    SIH.Reset();
+                    SIH.SetRange("No.", rec."No.");
+                    IF SIH.FindFirst() then begin
+                        EwayPage.SetTableView(SIH);
+                        EwayPage.RunModal();
+                    end;
+                end;
+            }
 
             action("Cancel E-Invoice New")
             {
@@ -745,7 +745,7 @@
         JsonEinvObject.WriteTo(reqOStm);
         reqOStm.WriteText(EinvRequestTxt);
         reqInStm.ReadText(EinvRequestTxt);
-        DownloadFromStream(ReqInStm, '', '', '', FileName);
+        // DownloadFromStream(ReqInStm, '', '', '', FileName);
         //clear(ReqtempBlob);//231122
         //Message('File Download Request');
         //>>************Request File Download code*************
@@ -808,8 +808,11 @@
                     ERROR(result);
 
             end
-            else
-                Message('Einvoive Response is request,response not generated %1', EinvResponse.HttpStatusCode);
+            else begin
+                Einvcontent := EinvResponse.Content;
+                Einvcontent.ReadAs(result);
+                Error('E-Invoice Response: %1', result);
+            end;
         end;
 
         //PCPL41-EINV
