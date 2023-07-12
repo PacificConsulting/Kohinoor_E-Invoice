@@ -51,6 +51,11 @@ pageextension 50601 General_led_Set_Ext extends "General Ledger Setup"
                     ApplicationArea = All;
                     ToolTip = 'Specifies the value of the Round of G/L Account field.';
                 }
+                field("E-Way API Link"; Rec."E-Way API Link")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the value of the E-Way API Link field.';
+                }
 
 
             }

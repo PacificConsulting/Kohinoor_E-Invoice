@@ -648,18 +648,6 @@
         FORMAT(totalcessnonadvolvalue) + '!' + FORMAT(totalinvoicevalue) + '!' + FORMAT(totalcessvalueofstate) + '!' + FORMAT(RoundOff) + '!' + '0' + '!' + FORMAT(0/*totaldiscount*/) + '!' +
         FORMAT(totalothercharge);
 
-        // itemlist := '10000' + '!' + 'ANTIFOAM K-600' + '!' + 'N' + '!' + '38249090' + '!' + '' + '!' + '120' + '!' + '' + '!' + 'KGS' + '!' + '385' + '!' + '46200' + '!' + '0' + '!' + '2310.00' + '!' + '0' + '!' + '43890' + '!' + '18' + '!' + '0' + '!' + '3950.1' + '!' + '3950.1' + '!' + '0' + '!' + '0' + '!' + '0' + '!' + '0' + '!' + '0' + '!' + '0' + '!' + '51790.2' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!';
-        // // itemlist:='10000' + '!' + 'ANTIFOAM Ó K-600' + '!' + 'N' + '!' + '38249090' + '!' + '' + '!' +
-        // //                 '120' + '!' + '' + '!' + 'KGS' + '!' + '385' + '!' +
-        // //                 '46200' + '!' + '0' + '!' +'2310.00' + '!' + '0' +
-        // //                 '!' + FORMAT(GSTBaseAmtLineWise/*SalesInvoiceLine."Tax Base Amount"*/) + '!' +/*FORMAT(ROUND(SalesInvoiceLine."GST %",1,'='))*/FORMAT(GSTRate) + '!' + FORMAT(IGSTAmt) + '!' + FORMAT(CGSTAmt) + '!' +
-        // //                 FORMAT(SGSTAmt) + '!' + FORMAT(cessrate) + '!' + FORMAT(CESSGSTAmt) + '!' + '0' + '!' + '0' + '!' + '0' + '!' + '0' + '!' + FORMAT(TotalItemValue) +
-        // //                 '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '' + '!' + ''
-        // valuedetails := '43890' + '!' + '3950.1' + '!' + '3950.1' + '!' + '0' + '!' + '0' + '!' +
-        // '0' + '!' + '51790.2' + '!' + FORMAT(totalcessvalueofstate) + '!' + FORMAT(RoundOff) + '!' + '0' + '!' + FORMAT(0/*totaldiscount*/) + '!' +
-        // FORMAT(totalothercharge);
-        //Message(itemlist);
-
 
 
         //api code
@@ -745,7 +733,7 @@
         JsonEinvObject.WriteTo(reqOStm);
         reqOStm.WriteText(EinvRequestTxt);
         reqInStm.ReadText(EinvRequestTxt);
-        // DownloadFromStream(ReqInStm, '', '', '', FileName);
+        DownloadFromStream(ReqInStm, '', '', '', FileName);
         //clear(ReqtempBlob);//231122
         //Message('File Download Request');
         //>>************Request File Download code*************

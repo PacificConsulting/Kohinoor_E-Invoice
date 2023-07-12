@@ -1341,12 +1341,26 @@ page 50604 "Posted Sales Invoice Eway"
         SalesInvHeader: Record 112;
         Desc: Text[100];
         ChargeItem: record 5800;
-
+        JsonEinvObject: JsonObject;
+        EinvRequestTxt: Text;
+        EinvRequestContent: HttpContent;
+        EinvResponse: HttpResponseMessage;
+        Einvcontent: HttpContent;
+        EinvResponseTxt: Text;
+        ReqOStm: OutStream;
+        ReqInStm: InStream;
+        ReqtempBlob: Codeunit "Temp Blob";
+        FileName: text;
+        HttpHead: HttpHeaders;
+        client: HttpClient;
+        Response: HttpResponseMessage;
+        EwayJarray: JsonArray;
+        LineObj: JsonObject;
     //>>PCPL/NSW/EINV 052522
     //Nirmal
     begin
         //PCPL41-EWAY
-
+        GeneralLedgerSetup.GET;
         IF Cust.GET(Rec."Sell-to Customer No.") THEN;
         IF Location_.GET(Rec."Location Code") THEN;
         IF State_.GET(Location_."State Code") THEN;
@@ -1405,8 +1419,8 @@ page 50604 "Posted Sales Invoice Eway"
         Clear(GSTBaseAmtLineWiseEWAY);
         Clear(TCSAMTLinewiseEWAY);
         Clear(TaxRecordIDEWAY);
+        Clear(EwayJarray);
         //<<PCPL/NSW/EINV 052522
-
 
         cnt := 0;
         Linedata := '[';
@@ -1485,8 +1499,8 @@ page 50604 "Posted Sales Invoice Eway"
                 GSTBaseAmtLineWiseEWAY := GetGSTBaseAmtLineWise(TaxRecordIDEWAY, ComponentJobjectEWAY);
                 //>>PCPL/NSW/EINV 052522
 
-                //IF (SalesInvLine."GST Base Amount" = 0) AND (SalesInvLine."No." <> '502650') THEN BEGIN //PCPL/NSW/EINV 052522  Old Code Comment field not Exist in BC 19
-                IF (GSTBaseAmtLineWiseEWAY = 0) AND (SalesInvLine."No." <> '502650') THEN BEGIN //PCPL/NSW/EINV 052522  New Code added
+                //IF (SalesInvLine."GST Base Amount" = 0) AND (SalesInvLine."No." <> GeneralLedgerSetup."Round of G/L Account") THEN BEGIN //PCPL/NSW/EINV 052522  Old Code Comment field not Exist in BC 19
+                IF (GSTBaseAmtLineWiseEWAY = 0) AND (SalesInvLine."No." <> GeneralLedgerSetup."Round of G/L Account") THEN BEGIN //PCPL/NSW/EINV 052522  New Code added
                     TotalTaxableAmt := SalesInvLine.Amount; //NEW
                     DocumentType := 'Delivery Challan';
                     Supply := 'Outward';
@@ -1526,23 +1540,58 @@ page 50604 "Posted Sales Invoice Eway"
 
                 IF ShipQty <> 0 THEN BEGIN
                     cnt += 1;
-                    IF (cnt = 1) AND (SalesInvLine."No." <> '502650') THEN
+                    IF (cnt = 1) AND (SalesInvLine."No." <> GeneralLedgerSetup."Round of G/L Account") THEN
                         Linedata += '{"product_name":"' + desc /*Item_."Description 2"*/+ '","product_description":"' + SalesInvLine.Description/*Item_."Description 2"*/ + '","hsn_code":"' +
                         SalesInvLine."HSN/SAC Code" + '","quantity":"' + FORMAT(ShipQty) + '","unit_of_product":"' + SalesInvLine."Unit of Measure Code" + '","cgst_rate":"' + FORMAT(CgstRate) +
                         '","sgst_rate":"' + FORMAT(SgstRate) + '","igst_rate":"' + FORMAT(IgstRate) + '","cess_rate":"' + FORMAT(CESSgstRate) + '","cessNonAdvol":"' + '0' +
                         '","taxable_amount":"' + FORMAT(/*TotalTaxableAmt*/TotaltaxableAmt1) + '"}'
                     ELSE
-                        IF SalesInvLine."No." <> '502650' THEN
+                        IF SalesInvLine."No." <> GeneralLedgerSetup."Round of G/L Account" THEN
                             Linedata += ',{"product_name":"' + Desc/*SalesInvLine.Description Item_."Description 2"*/ + '","product_description":"' + SalesInvLine.Description /*Item_."Description 2"*/ + '","hsn_code":"' +
                             SalesInvLine."HSN/SAC Code" + '","quantity":"' + FORMAT(ShipQty) + '","unit_of_product":"' + SalesInvLine."Unit of Measure Code" + '","cgst_rate":"' + FORMAT(CgstRate) +
                             '","sgst_rate":"' + FORMAT(SgstRate) + '","igst_rate":"' + FORMAT(IgstRate) + '","cess_rate":"' + FORMAT(CESSgstRate) + '","cessNonAdvol":"' + '0' +
                               '","taxable_amount":"' + FORMAT(/*TotalTaxableAmt*/TotaltaxableAmt1) + '"}';
                 END;
+
+                IF ShipQty <> 0 THEN BEGIN
+                    cnt += 1;
+                    IF (cnt = 1) AND (SalesInvLine."No." <> GeneralLedgerSetup."Round of G/L Account") THEN begin
+                        Clear(LineObj);
+                        LineObj.Add('product_name', desc);
+                        LineObj.Add('product_description', SalesInvLine.Description);
+                        LineObj.Add('hsn_code', SalesInvLine."HSN/SAC Code");
+                        LineObj.Add('quantity', FORMAT(ShipQty));
+                        LineObj.Add('unit_of_product', SalesInvLine."Unit of Measure Code");
+                        LineObj.Add('cgst_rate', FORMAT(CgstRate));
+                        LineObj.Add('sgst_rate', FORMAT(SgstRate));
+                        LineObj.Add('igst_rate', FORMAT(IgstRate));
+                        LineObj.Add('cess_rate', FORMAT(CESSgstRate));
+                        LineObj.Add('cessNonAdvol', Format(0));
+                        LineObj.Add('taxable_amount', FORMAT(TotaltaxableAmt1));
+                        EwayJarray.Add(LineObj);
+                    end ELSE
+                        IF SalesInvLine."No." <> GeneralLedgerSetup."Round of G/L Account" THEN begin
+                            Clear(LineObj);
+                            LineObj.Add('product_name', desc);
+                            LineObj.Add('product_description', SalesInvLine.Description);
+                            LineObj.Add('hsn_code', SalesInvLine."HSN/SAC Code");
+                            LineObj.Add('quantity', FORMAT(ShipQty));
+                            LineObj.Add('unit_of_product', SalesInvLine."Unit of Measure Code");
+                            LineObj.Add('cgst_rate', FORMAT(CgstRate));
+                            LineObj.Add('sgst_rate', FORMAT(SgstRate));
+                            LineObj.Add('igst_rate', FORMAT(IgstRate));
+                            LineObj.Add('cess_rate', FORMAT(CESSgstRate));
+                            LineObj.Add('cessNonAdvol', Format(0));
+                            LineObj.Add('taxable_amount', FORMAT(TotaltaxableAmt1));
+                            EwayJarray.Add(LineObj);
+                        end;
+
+                END;
             UNTIL SalesInvLine.NEXT = 0;
 
         Linedata := Linedata + ']';
 
-        GeneralLedgerSetup.GET;
+
         /*
         Ewaybill := Ewaybill.eWaybillController;
         token := Ewaybill.GetToken(GeneralLedgerSetup."EINV Base URL", GeneralLedgerSetup."EINV User Name", GeneralLedgerSetup."EINV Password",
@@ -1576,110 +1625,180 @@ page 50604 "Posted Sales Invoice Eway"
         Transport_Date := FORMAT(Rec."LR/RR Date", 0, '<Day,2>/<Month,2>/<year4>');  //PCPL/NSW/EINV 052522 New Code Added LR Date not Exist in BC 19 Replace With posting date
 
         //This code for Live <<
-
-        Headerdata := '{"access_token":"' + token + '","userGstin":"' + Location_."GST Registration No." + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
-                                                                                             '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
-                                                                                             '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + Location_."GST Registration No." + '","legal_name_of_consignor":"' + Location_.Name +
-                                                                                             '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
-                                                                                             Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
-                                                                                             '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + consignee_gstin + '","legal_name_of_consignee":"' + Cust.Name +
-                                                                                             '","address1_of_consignee":"' + consignee_address1 + '","address2_of_consignee":"' + consignee_address2 +
-                                                                                             '","place_of_consignee":"' + Cust.City + '","pincode_of_consignee":"' + Cust."Post Code" + '","state_of_supply":"' + StateCust.Description +
-                                                                                             '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
-                                                                                             '","total_invoice_value":"' + FORMAT(0) + '","taxable_amount":"' + FORMAT(TotaltaxableAmtValue) + '","cgst_amount":"' +
-                                                                                             FORMAT(TotalCGSTAmt) + '","sgst_amount":"' + FORMAT(TotalSGSTAmt) + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
-                                                                                             FORMAT(TotalCESSGSTAmt) + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + Rec."Transport Vendor GSTIN" + '","transporter_name":"' +
-                                                                                             Rec."Transport Vendor Name" + '","transporter_document_number":"' + Rec."LR/RR No." + '","transporter_document_date":"' + Transport_Date + '","transportation_mode":"' +
-                                                                                             Rec."Transport Method" + '","transportation_distance":"' + FORMAT(Rec."Distance (Km)") + '","vehicle_number":"' +
-                                                                                             Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
-                                                                                             '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
-                                                                                             Location_."E-Mail" + '"}';
         /*
+        Headerdata := '{"access_token":"' + token + '","userGstin":"' + Location_."GST Registration No." + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
+        '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
+        '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + Location_."GST Registration No." + '","legal_name_of_consignor":"' + Location_.Name +
+        '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
+        Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
+        '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + consignee_gstin + '","legal_name_of_consignee":"' + Cust.Name +
+        '","address1_of_consignee":"' + consignee_address1 + '","address2_of_consignee":"' + consignee_address2 +
+        '","place_of_consignee":"' + Cust.City + '","pincode_of_consignee":"' + Cust."Post Code" + '","state_of_supply":"' + StateCust.Description +
+        '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
+        '","total_invoice_value":"' + FORMAT(0) + '","taxable_amount":"' + FORMAT(TotaltaxableAmtValue) + '","cgst_amount":"' +
+        FORMAT(TotalCGSTAmt) + '","sgst_amount":"' + FORMAT(TotalSGSTAmt) + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
+        FORMAT(TotalCESSGSTAmt) + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + Rec."Transport Vendor GSTIN" + '","transporter_name":"' +
+        Rec."Transport Vendor Name" + '","transporter_document_number":"' + Rec."LR/RR No." + '","transporter_document_date":"' + Transport_Date + '","transportation_mode":"' +
+        Rec."Transport Method" + '","transportation_distance":"' + FORMAT(Rec."Distance (Km)") + '","vehicle_number":"' +
+        Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
+        '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
+        Location_."E-Mail" + '"}';
+        */
+
         //This code for Live <<
         //  MESSAGE(Headerdata);
         //MESSAGE(Linedata);
         // << This code for test
 
-        Headerdata := '{"access_token":"' + token + '","userGstin":"' + '05AAABB0639G1Z8' + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
-                                                                                             '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + "No." +
-                                                                                             '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + '05AAABB0639G1Z8' + '","legal_name_of_consignor":"' + Location_.Name +
-                                                                                             '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
-                                                                                             Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
-                                                                                             '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + '05AAABC0181E1ZE' + '","legal_name_of_consignee":"' + Cust.Name +
-                                                                                             '","address1_of_consignee":"' + consignee_address1 + '","address2_of_consignee":"' + consignee_address2 +
-                                                                                             '","place_of_consignee":"' + Cust.City + '","pincode_of_consignee":"' + Cust."Post Code" + '","state_of_supply":"' + StateCust.Description +
-                                                                                             '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + "Transaction Type" + '","other_value":"' + '' +
-                                                                                             '","total_invoice_value":"' + FORMAT(0) + '","taxable_amount":"' + FORMAT(TotaltaxableAmtValue) + '","cgst_amount":"' +
-                                                                                             FORMAT(TotalCGSTAmt) + '","sgst_amount":"' + FORMAT(TotalSGSTAmt) + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
-                                                                                             FORMAT(TotalCESSGSTAmt) + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + '05AAABB0639G1Z8' + '","transporter_name":"' +
-                                                                                             "Transport Vendor Name" + '","transporter_document_number":"' + "LR/RR No." + '","transporter_document_date":"' + Transport_Date + '","transportation_mode":"' +
-                                                                                             "Transport Method" + '","transportation_distance":"' + FORMAT("Distance (Km)") + '","vehicle_number":"' +
-                                                                                             "Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
-                                                                                             '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT("E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
-                                                                                             Location_."E-Mail" + '"}';
+        GeneralLedgerSetup.get();
+        Headerdata := '{"baseURL":"' + GeneralLedgerSetup."EINV Base URL" + '","access_token":"' + GeneralLedgerSetup."Access Token" + '","userGstin":"' + '05AAABB0639G1Z8' + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
+        '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
+        '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + '05AAABB0639G1Z8' + '","legal_name_of_consignor":"' + Location_.Name +
+        '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
+        Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
+        '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + '05AAABC0181E1ZE' + '","legal_name_of_consignee":"' + Cust.Name +
+        '","address1_of_consignee":"' + consignee_address1 + '","address2_of_consignee":"' + consignee_address2 +
+        '","place_of_consignee":"' + Cust.City + '","pincode_of_consignee":"' + Cust."Post Code" + '","state_of_supply":"' + StateCust.Description +
+        '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
+        '","total_invoice_value":"' + FORMAT(0) + '","taxable_amount":"' + FORMAT(TotaltaxableAmtValue) + '","cgst_amount":"' +
+        FORMAT(TotalCGSTAmt) + '","sgst_amount":"' + FORMAT(TotalSGSTAmt) + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
+        FORMAT(TotalCESSGSTAmt) + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + '05AAABB0639G1Z8' + '","transporter_name":"' +
+        Rec."Transport Vendor Name" + '","transporter_document_number":"' + Rec."LR/RR No." + '","transporter_document_date":"' + Transport_Date + '","transportation_mode":"' +
+        Rec."Transport Method" + '","transportation_distance":"' + FORMAT(Rec."Distance (Km)") + '","vehicle_number":"' +
+        Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
+        '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
+        Location_."E-Mail" + '"}';
         // >>
-        */
+
         //result := Ewaybill.GenerateEwaybill(GeneralLedgerSetup."EINV Base URL", token, Headerdata, Linedata, GeneralLedgerSetup."EINV Path");
+        //Generate data in Json Object and assign to Content var
+
+        //JsonEinvObject.Add('baseURL', GeneralLedgerSetup."EINV Base URL");
+        JsonEinvObject.Add('baseURL', GeneralLedgerSetup."EINV Base URL");
+        JsonEinvObject.Add('access_token', GeneralLedgerSetup."Access Token");
+        JsonEinvObject.Add('userGstin', '05AAABB0639G1Z8');
+        JsonEinvObject.Add('supply_type', Supply);
+        JsonEinvObject.Add('sub_supply_type', Subsupply);
+        JsonEinvObject.Add('sub_supply_description', SubSupplydescr);
+        JsonEinvObject.Add('document_type', DocumentType);
+        JsonEinvObject.Add('document_number', Rec."No.");
+        JsonEinvObject.Add('document_date', Document_Date);
+        JsonEinvObject.Add('gstin_of_consignor', '05AAABB0639G1Z8');
+        JsonEinvObject.Add('legal_name_of_consignor', Location_.Name);
+        JsonEinvObject.Add('address1_of_consignor', Location_.Address);
+        JsonEinvObject.Add('address2_of_consignor', Location_."Address 2");
+        JsonEinvObject.Add('place_of_consignor', Location_.City);
+        JsonEinvObject.Add('pincode_of_consignor', Location_."Post Code");
+        JsonEinvObject.Add('state_of_consignor', State_.Description);
+        JsonEinvObject.Add('actual_from_state_name', State_.Description);
+        JsonEinvObject.Add('gstin_of_consignee', '05AAABC0181E1ZE');
+        JsonEinvObject.Add('legal_name_of_consignee', Cust.Name);
+        JsonEinvObject.Add('address1_of_consignee', consignee_address1);
+        JsonEinvObject.Add('address2_of_consignee', consignee_address2);
+        JsonEinvObject.Add('place_of_consignee', Cust.City);
+        JsonEinvObject.Add('pincode_of_consignee', Cust."Post Code");
+        JsonEinvObject.Add('state_of_supply', StateCust.Description);
+        JsonEinvObject.Add('actual_to_state_name', StateCust.Description);
+        JsonEinvObject.Add('transaction_type', Rec."Transaction Type");
+        JsonEinvObject.Add('other_value', '');
+        JsonEinvObject.Add('total_invoice_value', FORMAT(0));
+        JsonEinvObject.Add('taxable_amount', FORMAT(TotaltaxableAmtValue));
+        JsonEinvObject.Add('cgst_amount', FORMAT(TotalCGSTAmt));
+        JsonEinvObject.Add('sgst_amount', FORMAT(TotalSGSTAmt));
+        JsonEinvObject.Add('igst_amount', FORMAT(TotalIGSTAmt));
+        JsonEinvObject.Add('cess_amount', FORMAT(TotalCESSGSTAmt));
+        JsonEinvObject.Add('cess_nonadvol_value', FORMAT(0));
+        JsonEinvObject.Add('transporter_id', '05AAABB0639G1Z8');
+        JsonEinvObject.Add('transporter_name', Rec."Transport Vendor Name");
+        JsonEinvObject.Add('transporter_document_number', Rec."LR/RR No.");
+        JsonEinvObject.Add('transporter_document_date', Transport_Date);
+        JsonEinvObject.Add('transportation_mode', Rec."Transport Method");
+        JsonEinvObject.Add('transportation_distance', FORMAT(Rec."Distance (Km)"));
+        JsonEinvObject.Add('vehicle_number', Rec."Vehicle No.");
+        JsonEinvObject.Add('vehicle_type', 'Regular');
+        JsonEinvObject.Add('generate_status', '1');
+        JsonEinvObject.Add('data_source', 'erp');
+        JsonEinvObject.Add('user_ref', '');
+        JsonEinvObject.Add('location_code', Location_.Code);
+        JsonEinvObject.Add('eway_bill_status', FORMAT(Rec."E-Way Bill Generate"));
+        JsonEinvObject.Add('auto_print', 'Y');
+        JsonEinvObject.Add('email', Location_."E-Mail");
+        JsonEinvObject.Add('itemList', EwayJarray);
+        //JsonEinvObject.Add('itemList', Linedata);
+        //Message(Linedata);
 
 
 
+        JsonEinvObject.WriteTo(EinvRequestTxt);
+        //EinvRequestTxt := EinvRequestTxt.Replace('}"}', '}');
+        //EinvRequestTxt := EinvRequestTxt.Replace('"[', '[');
+        EinvRequestContent.WriteFrom(EinvRequestTxt);
+        EinvRequestContent.GetHeaders(HttpHead);
 
-        /*
-        IF (12 = STRLEN(result)) AND (result <> 'Invalid Json') THEN BEGIN
-          IF EWayBillDetail.GET(SalesInvHdr."No.") THEN BEGIN
-            EWayBillDetail."Eway Bill No." := result;
-            EWayBillDetail."Ewaybill Error" := '';
-            EWayBillDetail.MODIFY;
-        
-            SalesInvHdr."E-Way Bill Generate" := SalesInvHdr."E-Way Bill Generate"::Generated;
-            SalesInvHdr.MODIFY;
-            MESSAGE(result);
-          END;
-        END ELSE BEGIN
-          EWayBillDetail."Ewaybill Error" := result;
-          EWayBillDetail.MODIFY;
-          COMMIT;
-          ERROR(result);
-        END;
-        */
-        IF result <> 'Invalid Json' THEN BEGIN
-            resresult := CONVERTSTR(result, ';', ',');
-            resresult1 := SELECTSTR(1, resresult);
-            resresult2 := SELECTSTR(2, resresult);
-        END;
+        //<<************Request File Download code*************
+        FileName := rec."No." + '_' + 'Requestfile' + '.txt';
+        reqtempblob.CreateInStream(reqInStm);
+        reqtempblob.CreateOutStream(reqOStm);
+        JsonEinvObject.WriteTo(reqOStm);
+        reqOStm.WriteText(EinvRequestTxt);
+        reqInStm.ReadText(EinvRequestTxt);
+        DownloadFromStream(ReqInStm, '', '', '', FileName);
 
-        IF (12 = STRLEN(resresult1)) THEN BEGIN
-            IF EWayBillDetail.GET(Rec."No.") THEN BEGIN
-                //EwaybillDetail.INIT;
-                EWayBillDetail."Eway Bill No." := resresult1;
-                EWayBillDetail."URL for PDF" := resresult2;
-                EWayBillDetail."Transporter Name" := Rec."Transport Vendor Name";
-                EWayBillDetail."Transportation Mode" := Rec."Transport Method";
-                EWayBillDetail."Transport Distance" := Rec."Distance (Km)";
-                EWayBillDetail."Ewaybill Error" := '';
-                EWayBillDetail."E-Way Bill Generate" := EWayBillDetail."E-Way Bill Generate"::Generated;
-                EWayBillDetail.MODIFY;
-                //EWayBillDetail.Insert();
-                SalesInvHeader.Reset();
-                SalesInvHeader.SetRange("No.", Rec."No.");
-                IF SalesInvHeader.FindFirst() then begin
-                    SalesInvHeader."E-Way Bill Generate" := SalesInvHeader."E-Way Bill Generate"::Generated;
-                    SalesInvHeader.MODIFY;
-                end;
-                MESSAGE(resresult1);
-            END;
-        END ELSE BEGIN
-            EWayBillDetail."Ewaybill Error" := result;
-            EWayBillDetail.MODIFY;
-            COMMIT;
-            ERROR(result);
-        END;
-        //PCPL41-EWAY
+        //*******************API Call Code****************************
+        if client.Post(GeneralLedgerSetup."E-Way API Link", EinvRequestContent, EinvResponse) then begin
+            if EinvResponse.IsSuccessStatusCode() then begin
+                Einvcontent := EinvResponse.Content;
+                Einvcontent.ReadAs(result);
+                //EINVPos := COPYSTR(result, 1, 8);
+
+                IF result <> 'Invalid Json' THEN BEGIN
+                    resresult := CONVERTSTR(result, ';', ',');
+                    resresult1 := SELECTSTR(1, resresult);
+                    resresult2 := SELECTSTR(2, resresult);
+                END;
+
+                IF (12 = STRLEN(resresult1)) THEN BEGIN
+                    IF EWayBillDetail.GET(Rec."No.") THEN BEGIN
+                        //EwaybillDetail.INIT;
+                        EWayBillDetail."Eway Bill No." := resresult1;
+                        EWayBillDetail."URL for PDF" := resresult2;
+                        EWayBillDetail."Transporter Name" := Rec."Transport Vendor Name";
+                        EWayBillDetail."Transportation Mode" := Rec."Transport Method";
+                        EWayBillDetail."Transport Distance" := Rec."Distance (Km)";
+                        EWayBillDetail."Ewaybill Error" := '';
+                        EWayBillDetail."E-Way Bill Generate" := EWayBillDetail."E-Way Bill Generate"::Generated;
+                        EWayBillDetail.MODIFY;
+                        //EWayBillDetail.Insert();
+                        SalesInvHeader.Reset();
+                        SalesInvHeader.SetRange("No.", Rec."No.");
+                        IF SalesInvHeader.FindFirst() then begin
+                            SalesInvHeader."E-Way Bill Generate" := SalesInvHeader."E-Way Bill Generate"::Generated;
+                            SalesInvHeader.MODIFY;
+                        end;
+                        MESSAGE(resresult1);
+                    END;
+                END ELSE BEGIN
+                    EWayBillDetail."Ewaybill Error" := result;
+                    EWayBillDetail.MODIFY;
+                    COMMIT;
+                    ERROR(result);
+                END;
+                //PCPL41-EWAY
+            end else begin
+                Einvcontent := EinvResponse.Content;
+                Einvcontent.ReadAs(result);
+                Error('E-Way Response: %1', result);
+            end;
+        end;
     end;
     //PCPL/NSW/EINV 050522
     procedure GetStatisticsPostedSalesInvAmount(
         SalesInvHeader: Record "Sales Invoice Header";
-        var GSTAmount: Decimal; var AmountToCust: Decimal)
+        var
+            GSTAmount: Decimal;
+
+    var
+        AmountToCust: Decimal)
     var
         SalesInvLine: Record "Sales Invoice Line";
         TotalAmount: decimal;

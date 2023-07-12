@@ -22,7 +22,11 @@ tableextension 50603 Trans_ship_Hear_ext extends "Transfer Shipment Header"
         {
             OptionCaption = ' ,To Generate,Generated';
             OptionMembers = " ","To Generate",Generated;
-
+        }
+        field(50606; "Transport Vendor Name"; Text[50])
+        {
+            Caption = 'Transport Vendor Name';
+            DataClassification = ToBeClassified;
         }
     }
 
