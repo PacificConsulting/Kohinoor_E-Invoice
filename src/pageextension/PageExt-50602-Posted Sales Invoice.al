@@ -19,14 +19,14 @@
                     ApplicationArea = all;
                 }
             }
-            // group("E-Way Details")
-            // {
-            //     part("E-Way Details1"; "E-Way Bill Detail")
-            //     {
-            //         ApplicationArea = All;
-            //         SubPageLink = "Document No." = FIELD("No.");
-            //     }
-            // }
+            group("E-Way Details")
+            {
+                part("E-Way Details1"; "E-Way Bill Detail")
+                {
+                    ApplicationArea = All;
+                    SubPageLink = "Document No." = FIELD("No.");
+                }
+            }
 
         }
 
@@ -103,6 +103,8 @@
                     RecLoc: Record 14;
                 begin
                     //PCPL41-EINV
+                    IF rec."Nature of Supply" = rec."Nature of Supply"::B2C then
+                        Error('E-invoice cannot be generated for B2C customers');
                     IF RecLoc.Get(rec."Location Code") then begin
                         IF RecLoc."E-Invoice Applicable" = false then
                             Error('You do not have permission to generate E-Invoice');
@@ -504,7 +506,10 @@
                     TotalItemValue := SalesInvoiceLine."Line Amount" + CGSTAmt + SGSTAmt + IGSTAmt + CESSGSTAmt + TCSAMTLinewise;//SalesInvoiceLine."TDS/TCS Amount"; //PCPL/NSW/EINV 052522
                     totalinvoicevalue += SalesInvoiceLine."Line Amount" + CGSTAmt + SGSTAmt + IGSTAmt + CESSGSTAmt + TCSAMTLinewise;// SalesInvoiceLine."TDS/TCS Amount"; //PCPL/NSW/EINV 052522
                     totalcessvalueofstate += 0;
-                    totaldiscount += SalesInvoiceLine."Line Discount Amount";
+                    IF SalesInvoiceLine."No." = '400003' then
+                        totaldiscount += SalesInvoiceLine.Amount
+                    else
+                        totaldiscount += SalesInvoiceLine."Line Discount Amount";
                     totalothercharge += 0;//SalesInvoiceLine."Charges To Customer"; //PCPL/NSW/030522 Code commented for Temp field not Exist in BC18
                 END
                 //  PCPL50 begin
@@ -559,7 +564,10 @@
                         TotalItemValue := ((SalesInvoiceLine."Line Amount" + CGSTAmt + SGSTAmt + IGSTAmt + CESSGSTAmt + TCSAMTLinewise) / rec."Currency Factor"); //PCPL/NSW/EINV 050522
                         totalinvoicevalue += ((SalesInvoiceLine."Line Amount" + CGSTAmt + SGSTAmt + IGSTAmt + CESSGSTAmt + TCSAMTLinewise) / rec."Currency Factor"); //PCPL/NSW/EINV 050522
                         totalcessvalueofstate += 0;
-                        totaldiscount += (SalesInvoiceLine."Line Discount Amount" / rec."Currency Factor");
+                        if SalesInvoiceLine."No." = '400003' then
+                            totaldiscount += (SalesInvoiceLine.Amount / rec."Currency Factor")
+                        else
+                            totaldiscount += (SalesInvoiceLine."Line Discount Amount" / rec."Currency Factor");
                         totalothercharge += 0;// (SalesInvoiceLine."Charges To Customer" / "Currency Factor"); //PCPL/NSW/EINV 052522  Old Code Comment field not Exist in BC 19
                     END;
                 //PCPL50 end
@@ -607,7 +615,7 @@
 
                 IF (ExpCustomer."GST Customer Type" <> ExpCustomer."GST Customer Type"::Export) THEN BEGIN //PCPL50
                     IF (itemlist = '') AND (SalesInvoiceLine."No." <> GLSetup."Round of G/L Account") THEN
-                        itemlist := FORMAT(SalesInvoiceLine."Line No.") + '!' + DELCHR(FORMAT(Item.Description), '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)|®|™') + '!' + IsService + '!' + SalesInvoiceLine."HSN/SAC Code" + '!' + '' + '!' +
+                        itemlist := FORMAT(SalesInvoiceLine."Line No.") + '!' + DELCHR(FORMAT(Item."Description 2"), '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)|®|™') + '!' + IsService + '!' + SalesInvoiceLine."HSN/SAC Code" + '!' + '' + '!' +
                         FORMAT(SalesInvoiceLine.Quantity) + '!' + '' + '!' + SalesInvoiceLine."Unit of Measure Code" + '!' + FORMAT(ROUND(SalesInvoiceLine."Unit Price", 0.01, '>')) + '!' +
                         FORMAT(ROUND(SalesInvoiceLine."Unit Price", 0.01, '>') * (SalesInvoiceLine.Quantity)/*SalesInvoiceLine."Line Amount"*/) + '!' + '0' + '!' + FORMAT(SalesInvoiceLine."Line Discount Amount") + '!' + FORMAT(TCSAMTLinewise) +
                         '!' + FORMAT(GSTBaseAmtLineWise/*SalesInvoiceLine."Tax Base Amount"*/) + '!' +/*FORMAT(ROUND(SalesInvoiceLine."GST %",1,'='))*/FORMAT(GSTRate) + '!' + FORMAT(IGSTAmt) + '!' + FORMAT(CGSTAmt) + '!' +
@@ -615,7 +623,7 @@
                         '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '!' + '' + '' + '!' + ''
                     ELSE
                         IF SalesInvoiceLine."No." <> GLSetup."Round of G/L Account" THEN
-                            itemlist := itemlist + ';' + FORMAT(SalesInvoiceLine."Line No.") + '!' + DELCHR(FORMAT(Item.Description), '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)|®|™') + '!' + IsService + '!' + SalesInvoiceLine."HSN/SAC Code" +
+                            itemlist := itemlist + ';' + FORMAT(SalesInvoiceLine."Line No.") + '!' + DELCHR(FORMAT(Item."Description 2"), '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)|®|™') + '!' + IsService + '!' + SalesInvoiceLine."HSN/SAC Code" +
                             '!' + '' + '!' + FORMAT(SalesInvoiceLine.Quantity) + '!' + '' + '!' + SalesInvoiceLine."Unit of Measure Code" + '!' +
                             FORMAT(ROUND(SalesInvoiceLine."Unit Price", 0.01, '>')) + '!' + FORMAT(ROUND(SalesInvoiceLine."Unit Price", 0.01, '>') * (SalesInvoiceLine.Quantity)/*SalesInvoiceLine."Line Amount"*/) + '!' + '0' + '!' +
                             FORMAT(SalesInvoiceLine."Line Discount Amount") + '!' + FORMAT(TCSAMTLinewise) + '!' + FORMAT(GSTBaseAmtLineWise/*SalesInvoiceLine."Tax Base Amount"*/) + '!' +
@@ -645,7 +653,7 @@
             UNTIL SalesInvoiceLine.NEXT = 0;
 
         valuedetails := FORMAT(totaltaxableamt) + '!' + FORMAT(TotalCGSTAmt) + '!' + FORMAT(TotalCGSTAmt) + '!' + FORMAT(TotalIGSTAmt) + '!' + FORMAT(TotalCessGSTAmt) + '!' +
-        FORMAT(totalcessnonadvolvalue) + '!' + FORMAT(totalinvoicevalue) + '!' + FORMAT(totalcessvalueofstate) + '!' + FORMAT(RoundOff) + '!' + '0' + '!' + FORMAT(0/*totaldiscount*/) + '!' +
+        FORMAT(totalcessnonadvolvalue) + '!' + FORMAT(totalinvoicevalue) + '!' + FORMAT(totalcessvalueofstate) + '!' + FORMAT(RoundOff) + '!' + '0' + '!' + FORMAT(totaldiscount) + '!' +
         FORMAT(totalothercharge);
 
 

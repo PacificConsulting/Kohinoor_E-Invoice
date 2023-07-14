@@ -5,7 +5,7 @@ page 50602 "E-Way Bill Detail"
     DeleteAllowed = false;
     PageType = ListPart;
     SourceTable = 50602;
-    ApplicationArea = all;
+    //ApplicationArea = all;
     UsageCategory = Lists;
     Editable = true;
     //ModifyAllowed = true;

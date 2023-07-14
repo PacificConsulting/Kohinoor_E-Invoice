@@ -82,6 +82,8 @@ pageextension 50603 "Posted_sales_CrMemo_ext EINV" extends "Posted Sales Credit 
                     RecLoc: Record 14;
                 begin
                     //PCPL41-EINV
+                    IF Rec."Nature of Supply" = rec."Nature of Supply"::B2C then
+                        Error('E-invoice cannot be generated for B2C customers');
                     IF RecLoc.Get(rec."Location Code") then begin
                         IF RecLoc."E-Invoice Applicable" = false then
                             Error('You do not have permission to generate E-Invoice');
@@ -454,7 +456,10 @@ pageextension 50603 "Posted_sales_CrMemo_ext EINV" extends "Posted Sales Credit 
                 TotalItemValue := SalesCrMemoLine."Line Amount" + CGSTAmt + SGSTAmt + IGSTAmt + CESSGSTAmt + TCSAMTLinewise;//SalesCrMemoLine."TDS/TCS Amount"; //PCPL/NSW/030522 
                 totalinvoicevalue += SalesCrMemoLine."Line Amount" + CGSTAmt + SGSTAmt + IGSTAmt + CESSGSTAmt + TCSAMTLinewise;//SalesCrMemoLine."TDS/TCS Amount"; //PCPL/NSW/030522 
                 totalcessvalueofstate += 0;
-                totaldiscount += SalesCrMemoLine."Line Discount Amount";
+                IF SalesCrMemoLine."No." = '400003' then
+                    totaldiscount += SalesCrMemoLine.Amount
+                else
+                    totaldiscount += SalesCrMemoLine."Line Discount Amount";
                 totalothercharge += 0;//SalesCrMemoLine."Charges To Customer"; //PCPL/NSW/030522 
 
                 IF SalesCrMemoLine."GST Group Type" = SalesCrMemoLine."GST Group Type"::Service THEN

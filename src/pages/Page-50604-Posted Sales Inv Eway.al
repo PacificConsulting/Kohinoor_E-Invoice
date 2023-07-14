@@ -1356,6 +1356,7 @@ page 50604 "Posted Sales Invoice Eway"
         Response: HttpResponseMessage;
         EwayJarray: JsonArray;
         LineObj: JsonObject;
+        RecItem: Record 27;
     //>>PCPL/NSW/EINV 052522
     //Nirmal
     begin
@@ -1552,13 +1553,14 @@ page 50604 "Posted Sales Invoice Eway"
                             '","sgst_rate":"' + FORMAT(SgstRate) + '","igst_rate":"' + FORMAT(IgstRate) + '","cess_rate":"' + FORMAT(CESSgstRate) + '","cessNonAdvol":"' + '0' +
                               '","taxable_amount":"' + FORMAT(/*TotalTaxableAmt*/TotaltaxableAmt1) + '"}';
                 END;
-
+                IF SalesInvLine.Type = SalesInvLine.Type::Item then
+                    IF RecItem.get(SalesInvLine."No.") then;
                 IF ShipQty <> 0 THEN BEGIN
                     cnt += 1;
                     IF (cnt = 1) AND (SalesInvLine."No." <> GeneralLedgerSetup."Round of G/L Account") THEN begin
                         Clear(LineObj);
                         LineObj.Add('product_name', desc);
-                        LineObj.Add('product_description', SalesInvLine.Description);
+                        LineObj.Add('product_description', RecItem."Description 2");
                         LineObj.Add('hsn_code', SalesInvLine."HSN/SAC Code");
                         LineObj.Add('quantity', FORMAT(ShipQty));
                         LineObj.Add('unit_of_product', SalesInvLine."Unit of Measure Code");
@@ -1573,7 +1575,7 @@ page 50604 "Posted Sales Invoice Eway"
                         IF SalesInvLine."No." <> GeneralLedgerSetup."Round of G/L Account" THEN begin
                             Clear(LineObj);
                             LineObj.Add('product_name', desc);
-                            LineObj.Add('product_description', SalesInvLine.Description);
+                            LineObj.Add('product_description', RecItem."Description 2");
                             LineObj.Add('hsn_code', SalesInvLine."HSN/SAC Code");
                             LineObj.Add('quantity', FORMAT(ShipQty));
                             LineObj.Add('unit_of_product', SalesInvLine."Unit of Measure Code");

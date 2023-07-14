@@ -1,10 +1,9 @@
 page 50601 "E-Invoice Detail"
 {
     // version PCPL41-EINV
-
     PageType = ListPart;
     SourceTable = 50601;
-    ApplicationArea = all;
+    //ApplicationArea = all;
     UsageCategory = Lists;
     Editable = false;
     Caption = 'E-Invoice Detail';
