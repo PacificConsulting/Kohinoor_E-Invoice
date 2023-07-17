@@ -327,14 +327,14 @@
         documentdetails := 'INV' + '!' + rec."No." + '!' + Document_Date;
 
         CompanyInformation.GET;
-        Location.GET(rec."Location Code");
+        IF Location.GET(rec."Location Code") then;
         State.GET(Location."State Code");
         LocPhoneNo := DELCHR(Location."Phone No.", '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)');
         LocPhoneNo := COPYSTR(LocPhoneNo, 1, 10);
         sellerdetails := Location."GST Registration No." + '!' + CompanyInformation.Name + '!' + Location.Name + '!' + DELCHR(Location.Address, '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)') + '!' + DELCHR(Location."Address 2", '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)') + '!' +
-        rec."Location Code" + '!' + DELCHR(Location."Post Code", '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)') + '!' + State."State Code (GST Reg. No.)" + '!' + LocPhoneNo + '!' + Location."E-Mail";
+        Location.Name + '!' + DELCHR(Location."Post Code", '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)') + '!' + State."State Code (GST Reg. No.)" + '!' + LocPhoneNo + '!' + Location."E-Mail";
 
-        dispatchdetails := Location.Name + '!' + DELCHR(Location.Address, '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)') + '!' + DELCHR(Location."Address 2", '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)') + '!' + rec."Location Code" + '!' + Location."Post Code" + '!' + State.Description;
+        dispatchdetails := Location.Name + '!' + DELCHR(Location.Address, '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)') + '!' + DELCHR(Location."Address 2", '=', '!|@|#|$|%|^|&|*|/|''|\|-| |(|)') + '!' + Location.Name + '!' + Location."Post Code" + '!' + State.Description;
 
         Customer.GET(rec."Sell-to Customer No.");
         IF BuyState.GET(Customer."State Code") THEN
