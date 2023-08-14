@@ -1530,7 +1530,10 @@ page 50604 "Posted Sales Invoice Eway"
                     TotaltaxableAmtValue1 := DELCHR(FORMAT(TotaltaxableAmtValue), '=', ',');
 
                 IF Item_.Get(SalesInvLine."No.") then
-                    desc := Item_.Description
+                    IF Item_."Description 2" = '' then
+                        Desc := SalesInvLine."Description 2"
+                    else
+                        Desc := Item_."Description 2"
                 else
                     if ChargeItem.Get(SalesInvLine."No.") then
                         desc := ChargeItem.Description
@@ -1600,33 +1603,6 @@ page 50604 "Posted Sales Invoice Eway"
         GeneralLedgerSetup."EINV Client ID", GeneralLedgerSetup."EINV Client Secret", GeneralLedgerSetup."EINV Grant Type", GeneralLedgerSetup."EINV Path");
         */
         IF EWayBillDetail.GET(Rec."No.") then;
-        //Temp Comment
-        //IF EWayBillDetail.GET(SalesInvHdr."No.") THEN BEGIN
-        //Document_Date := FORMAT("Document Date", 0, '<Day,2>/<Month,2>/<year4>');
-        //Transport_Date := FORMAT("LR/RR Date", 0, '<Day,2>/<Month,2>/<year4>');  //PCPL/NSW/EINV 052522 New Code Added LR Date not Exist in BC 19 Replace With posting date
-        // Headerdata := '{"access_token":"' + token + '","userGstin":"' + Location_."GST Registration No." + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
-        //  '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + "No." +
-        //  '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + Location_."GST Registration No." + '","legal_name_of_consignor":"' + Location_.Name +
-        //  '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
-        //  Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
-        //  '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + consignee_gstin + '","legal_name_of_consignee":"' + consignee_name +
-        //  '","address1_of_consignee":"' + consignee_address1 + '","address2_of_consignee":"' + consignee_address2 +
-        //  '","place_of_consignee":"' + consignee_place + '","pincode_of_consignee":"' + consignee_pincode + '","state_of_supply":"' + consignee_StateofSupply +
-        //  '","actual_to_state_name":"' + consignee_StateName + '","transaction_type":"' + "Transaction Type" + '","other_value":"' + '' +
-        //  '","total_invoice_value":"' + FORMAT(LineInvoiceAmt) + '","taxable_amount":"' + FORMAT(TotaltaxableAmtValue1) + '","cgst_amount":"' +
-        //  FORMAT(TotalCGSTAmt) + '","sgst_amount":"' + FORMAT(TotalSGSTAmt) + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
-        //  FORMAT(TotalCESSGSTAmt) + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + "Transport Vendor GSTIN" + '","transporter_name":"' +
-        //  "Transport Vendor Name" + '","transporter_document_number":"' + "LR/RR No." + '","transporter_document_date":"' + Transport_Date + '","transportation_mode":"' +  //LR/RR No. Not exist in BC 19
-        //  "Transport Method" + '","transportation_distance":"' + FORMAT("Distance (Km)") + '","vehicle_number":"' +
-        //  "Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
-        //  '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT("E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
-        //  Location_."E-Mail" + '"}';
-        //PCPL/0026
-
-        Document_Date := FORMAT(Rec."Posting Date", 0, '<Day,2>/<Month,2>/<year4>');
-        Transport_Date := FORMAT(Rec."LR/RR Date", 0, '<Day,2>/<Month,2>/<year4>');  //PCPL/NSW/EINV 052522 New Code Added LR Date not Exist in BC 19 Replace With posting date
-
-        //This code for Live <<
         /*
         Headerdata := '{"access_token":"' + token + '","userGstin":"' + Location_."GST Registration No." + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
         '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
@@ -1647,29 +1623,52 @@ page 50604 "Posted Sales Invoice Eway"
         Location_."E-Mail" + '"}';
         */
 
+        Document_Date := FORMAT(Rec."Posting Date", 0, '<Day,2>/<Month,2>/<year4>');
+        Transport_Date := FORMAT(Rec."LR/RR Date", 0, '<Day,2>/<Month,2>/<year4>');  //PCPL/NSW/EINV 052522 New Code Added LR Date not Exist in BC 19 Replace With posting date
         //This code for Live <<
-        //  MESSAGE(Headerdata);
-        //MESSAGE(Linedata);
-        // << This code for test
+        //Temp Comment
+        //IF EWayBillDetail.GET(SalesInvHdr."No.") THEN BEGIN
+        //Document_Date := FORMAT("Document Date", 0, '<Day,2>/<Month,2>/<year4>');
+        //Transport_Date := FORMAT("LR/RR Date", 0, '<Day,2>/<Month,2>/<year4>');  //PCPL/NSW/EINV 052522 New Code Added LR Date not Exist in BC 19 Replace With posting date
+        Headerdata := '{"baseURL":"' + GeneralLedgerSetup."EINV Base URL" + '","access_token":"' + GeneralLedgerSetup."Access Token" + '","userGstin":"' + Location_."GST Registration No." + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
+         '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
+         '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + Location_."GST Registration No." + '","legal_name_of_consignor":"' + Location_.Name +
+         '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
+         Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
+         '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + consignee_gstin + '","legal_name_of_consignee":"' + Cust.Name/*consignee_name*/ +
+         '","address1_of_consignee":"' + consignee_address1 + '","address2_of_consignee":"' + consignee_address2 +
+         '","place_of_consignee":"' + Cust.City/*consignee_place*/ + '","pincode_of_consignee":"' + Cust."Post Code"/*consignee_pincode*/ + '","state_of_supply":"' + StateCust.Description/*consignee_StateofSupply*/ +
+         '","actual_to_state_name":"' + StateCust.Description/*consignee_StateName*/ + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
+         '","total_invoice_value":"' + FORMAT(0/*LineInvoiceAmt*/) + '","taxable_amount":"' + FORMAT(TotaltaxableAmtValue/*TotaltaxableAmtValue1*/) + '","cgst_amount":"' +
+         FORMAT(TotalCGSTAmt) + '","sgst_amount":"' + FORMAT(TotalSGSTAmt) + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
+         FORMAT(TotalCESSGSTAmt) + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + Rec."Transport Vendor GSTIN" + '","transporter_name":"' +
+         Rec."Transport Vendor Name" + '","transporter_document_number":"' + Rec."LR/RR No." + '","transporter_document_date":"' + Transport_Date + '","transportation_mode":"' +  //LR/RR No. Not exist in BC 19
+         Rec."Transport Method" + '","transportation_distance":"' + FORMAT(Rec."Distance (Km)") + '","vehicle_number":"' +
+         Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
+         '","location_code":"' + Location_.Name + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
+         Location_."E-Mail" + '"}';
+        //PCPL/0026
 
-        GeneralLedgerSetup.get();
-        Headerdata := '{"baseURL":"' + GeneralLedgerSetup."EINV Base URL" + '","access_token":"' + GeneralLedgerSetup."Access Token" + '","userGstin":"' + '05AAABB0639G1Z8' + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
-        '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
-        '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + '05AAABB0639G1Z8' + '","legal_name_of_consignor":"' + Location_.Name +
-        '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
-        Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
-        '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + '05AAABC0181E1ZE' + '","legal_name_of_consignee":"' + Cust.Name +
-        '","address1_of_consignee":"' + consignee_address1 + '","address2_of_consignee":"' + consignee_address2 +
-        '","place_of_consignee":"' + Cust.City + '","pincode_of_consignee":"' + Cust."Post Code" + '","state_of_supply":"' + StateCust.Description +
-        '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
-        '","total_invoice_value":"' + FORMAT(0) + '","taxable_amount":"' + FORMAT(TotaltaxableAmtValue) + '","cgst_amount":"' +
-        FORMAT(TotalCGSTAmt) + '","sgst_amount":"' + FORMAT(TotalSGSTAmt) + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
-        FORMAT(TotalCESSGSTAmt) + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + '05AAABB0639G1Z8' + '","transporter_name":"' +
-        Rec."Transport Vendor Name" + '","transporter_document_number":"' + Rec."LR/RR No." + '","transporter_document_date":"' + Transport_Date + '","transportation_mode":"' +
-        Rec."Transport Method" + '","transportation_distance":"' + FORMAT(Rec."Distance (Km)") + '","vehicle_number":"' +
-        Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
-        '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
-        Location_."E-Mail" + '"}';
+
+        // << This code for test
+        // GeneralLedgerSetup.get();
+        // Headerdata := '{"baseURL":"' + GeneralLedgerSetup."EINV Base URL" + '","access_token":"' + GeneralLedgerSetup."Access Token" + '","userGstin":"' + '05AAABB0639G1Z8' + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
+        // '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
+        // '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + '05AAABB0639G1Z8' + '","legal_name_of_consignor":"' + Location_.Name +
+        // '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
+        // Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
+        // '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + '05AAABC0181E1ZE' + '","legal_name_of_consignee":"' + Cust.Name +
+        // '","address1_of_consignee":"' + consignee_address1 + '","address2_of_consignee":"' + consignee_address2 +
+        // '","place_of_consignee":"' + Cust.City + '","pincode_of_consignee":"' + Cust."Post Code" + '","state_of_supply":"' + StateCust.Description +
+        // '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
+        // '","total_invoice_value":"' + FORMAT(0) + '","taxable_amount":"' + FORMAT(TotaltaxableAmtValue) + '","cgst_amount":"' +
+        // FORMAT(TotalCGSTAmt) + '","sgst_amount":"' + FORMAT(TotalSGSTAmt) + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
+        // FORMAT(TotalCESSGSTAmt) + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + '05AAABB0639G1Z8' + '","transporter_name":"' +
+        // Rec."Transport Vendor Name" + '","transporter_document_number":"' + Rec."LR/RR No." + '","transporter_document_date":"' + Transport_Date + '","transportation_mode":"' +
+        // Rec."Transport Method" + '","transportation_distance":"' + FORMAT(Rec."Distance (Km)") + '","vehicle_number":"' +
+        // Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
+        // '","location_code":"' + Location_.Name + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
+        // Location_."E-Mail" + '"}';
         // >>
 
         //result := Ewaybill.GenerateEwaybill(GeneralLedgerSetup."EINV Base URL", token, Headerdata, Linedata, GeneralLedgerSetup."EINV Path");
