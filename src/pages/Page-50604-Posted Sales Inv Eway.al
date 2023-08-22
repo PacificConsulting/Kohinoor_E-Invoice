@@ -1677,14 +1677,14 @@ page 50604 "Posted Sales Invoice Eway"
         //JsonEinvObject.Add('baseURL', GeneralLedgerSetup."EINV Base URL");
         JsonEinvObject.Add('baseURL', GeneralLedgerSetup."EINV Base URL");
         JsonEinvObject.Add('access_token', GeneralLedgerSetup."Access Token");
-        JsonEinvObject.Add('userGstin', '05AAABB0639G1Z8');
+        JsonEinvObject.Add('userGstin', Location_."GST Registration No.");
         JsonEinvObject.Add('supply_type', Supply);
         JsonEinvObject.Add('sub_supply_type', Subsupply);
         JsonEinvObject.Add('sub_supply_description', SubSupplydescr);
         JsonEinvObject.Add('document_type', DocumentType);
         JsonEinvObject.Add('document_number', Rec."No.");
         JsonEinvObject.Add('document_date', Document_Date);
-        JsonEinvObject.Add('gstin_of_consignor', '05AAABB0639G1Z8');
+        JsonEinvObject.Add('gstin_of_consignor', Location_."GST Registration No.");
         JsonEinvObject.Add('legal_name_of_consignor', Location_.Name);
         JsonEinvObject.Add('address1_of_consignor', Location_.Address);
         JsonEinvObject.Add('address2_of_consignor', Location_."Address 2");
@@ -1692,7 +1692,7 @@ page 50604 "Posted Sales Invoice Eway"
         JsonEinvObject.Add('pincode_of_consignor', Location_."Post Code");
         JsonEinvObject.Add('state_of_consignor', State_.Description);
         JsonEinvObject.Add('actual_from_state_name', State_.Description);
-        JsonEinvObject.Add('gstin_of_consignee', '05AAABC0181E1ZE');
+        JsonEinvObject.Add('gstin_of_consignee', consignee_gstin);
         JsonEinvObject.Add('legal_name_of_consignee', Cust.Name);
         JsonEinvObject.Add('address1_of_consignee', consignee_address1);
         JsonEinvObject.Add('address2_of_consignee', consignee_address2);
@@ -1709,7 +1709,7 @@ page 50604 "Posted Sales Invoice Eway"
         JsonEinvObject.Add('igst_amount', FORMAT(TotalIGSTAmt));
         JsonEinvObject.Add('cess_amount', FORMAT(TotalCESSGSTAmt));
         JsonEinvObject.Add('cess_nonadvol_value', FORMAT(0));
-        JsonEinvObject.Add('transporter_id', '05AAABB0639G1Z8');
+        JsonEinvObject.Add('transporter_id', Rec."Transport Vendor GSTIN");
         JsonEinvObject.Add('transporter_name', Rec."Transport Vendor Name");
         JsonEinvObject.Add('transporter_document_number', Rec."LR/RR No.");
         JsonEinvObject.Add('transporter_document_date', Transport_Date);
