@@ -1373,6 +1373,8 @@ page 50604 "Posted Sales Invoice Eway"
             consignee_gstin := ShiptoCode."GST Registration No.";
         END ELSE
             consignee_gstin := Cust."GST Registration No.";
+        if Cust."GST Customer Type" = Cust."GST Customer Type"::Unregistered then
+            consignee_gstin := 'URP';
         IF Rec."Ship-to Code" <> '' THEN BEGIN
             consignee_address1 := ShiptoCode.Address;
         END ELSE

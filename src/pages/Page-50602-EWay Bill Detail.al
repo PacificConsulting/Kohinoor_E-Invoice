@@ -36,20 +36,25 @@ page 50602 "E-Way Bill Detail"
             field("Transporter Name"; Rec."Transporter Name")
             {
                 ApplicationArea = all;
-                //Editable = Vedit;
-                Editable = false;
+                Editable = Vedit;
+                //Editable = false;
             }
             field("Transportation Mode"; Rec."Transportation Mode")
             {
                 ApplicationArea = all;
-                //Editable = Vedit;
-                Editable = false;
+                Editable = Vedit;
+                //Editable = false;
             }
             field("Transport Distance"; Rec."Transport Distance")
             {
                 ApplicationArea = all;
-                //Editable = Vedit;
-                Editable = false;
+                Editable = Vedit;
+                //Editable = false;
+            }
+            field("Transporter Id"; Rec."Transporter Id")
+            {
+                ApplicationArea = all;
+                Editable = Vedit;
             }
 
         }

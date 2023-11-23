@@ -352,6 +352,7 @@ pageextension 50605 Posted_Tra_ship_ext extends "Posted Transfer Shipment"
                     LineObj.Add('taxable_amount', FORMAT(TotaltaxableAmt1));
                     EwayJarray.Add(LineObj);
                 end ELSE begin
+                    Clear(LineObj);
                     LineObj.Add('product_name', Item_.Description);
                     LineObj.Add('product_description', Item_.Description);
                     LineObj.Add('hsn_code', TransferShipmentLine."HSN/SAC Code");
@@ -378,48 +379,49 @@ pageextension 50605 Posted_Tra_ship_ext extends "Posted Transfer Shipment"
         GeneralLedgerSetup."EINV Client ID", GeneralLedgerSetup."EINV Client Secret", GeneralLedgerSetup."EINV Grant Type", GeneralLedgerSetup."EINV Path");
         */
         IF EWayBillDetail.GET(Rec."No.") then;
+        Clear(JsonEinvObject);
         //token := Ewaybill.GetToken('https://clientbasic.mastersindia.co', 'testeway@mastersindia.co', 'Test@1234',
         //'fIXefFyxGNfDWOcCWn', 'QFd6dZvCGqckabKxTapfZgJc', 'password');
         //Original code Comment for Test DB for Testing Purpose
         //******Below Code for Live
-        // Document_Date := FORMAT(Rec."Posting Date", 0, '<Day,2>/<Month,2>/<year4>');
-        // Headerdata := '{"access_token":"' + token + '","userGstin":"' + Location_."GST Registration No." + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
-        // '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
-        // '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + Location_."GST Registration No." + '","legal_name_of_consignor":"' + Location_.Name +
-        // '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
-        // Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
-        // '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + recToLoc."GST Registration No." + '","legal_name_of_consignee":"' + recToLoc.Name +
-        // '","address1_of_consignee":"' + recToLoc.Address + '","address2_of_consignee":"' + recToLoc."Address 2" +
-        // '","place_of_consignee":"' + recToLoc.City + '","pincode_of_consignee":"' + recToLoc."Post Code" + '","state_of_supply":"' + StateCust.Description +
-        // '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
-        // '","total_invoice_value":"' + FORMAT(TotalInvAmt) + '","taxable_amount":"' + FORMAT(TotaltaxableAmt1Total) + '","cgst_amount":"' +
-        // '0' + '","sgst_amount":"' + '0' + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
-        // '0' + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + Location_."GST Registration No." + '","transporter_name":"' +
-        // /*EWayBillDetail."Transporter Name"*/ /*Rec."Transport Vendor"*/'' + '","transporter_document_number":"' + '' + '","transporter_document_date":"' + '' + '","transportation_mode":"' +
-        // /*EWayBillDetail."Transportation Mode"*/ Rec."Mode of Transport" + '","transportation_distance":"' + /*FORMAT(EWayBillDetail."Transport Distance")*/ '' + '","vehicle_number":"' +
-        // Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
-        // '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
-        // Location_."E-Mail" + '"}';
-
-        //******Below Code for Test
         Document_Date := FORMAT(Rec."Posting Date", 0, '<Day,2>/<Month,2>/<year4>');
-        Headerdata := '{"access_token":"' + token + '","userGstin":"' + '05AAABB0639G1Z8' + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
+        Headerdata := '{"access_token":"' + token + '","userGstin":"' + Location_."GST Registration No." + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
         '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
-        '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + '05AAABB0639G1Z8' + '","legal_name_of_consignor":"' + Location_.Name +
+        '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + Location_."GST Registration No." + '","legal_name_of_consignor":"' + Location_.Name +
         '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
         Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
-        '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + '05AAABC0181E1ZE' + '","legal_name_of_consignee":"' + recToLoc.Name +
+        '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + recToLoc."GST Registration No." + '","legal_name_of_consignee":"' + recToLoc.Name +
         '","address1_of_consignee":"' + recToLoc.Address + '","address2_of_consignee":"' + recToLoc."Address 2" +
         '","place_of_consignee":"' + recToLoc.City + '","pincode_of_consignee":"' + recToLoc."Post Code" + '","state_of_supply":"' + StateCust.Description +
         '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
         '","total_invoice_value":"' + FORMAT(TotalInvAmt) + '","taxable_amount":"' + FORMAT(TotaltaxableAmt1Total) + '","cgst_amount":"' +
         '0' + '","sgst_amount":"' + '0' + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
-        '0' + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + '05AAABB0639G1Z8' + '","transporter_name":"' +
-        Rec."Transport Vendor Name" + '","transporter_document_number":"' + '' + '","transporter_document_date":"' + '' + '","transportation_mode":"' +
-        Rec."Mode of Transport" + '","transportation_distance":"' + FORMAT(Rec."Distance (Km)") + '","vehicle_number":"' +
+        '0' + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + Location_."GST Registration No." + '","transporter_name":"' +
+        /*EWayBillDetail."Transporter Name"*/ /*Rec."Transport Vendor"*/'' + '","transporter_document_number":"' + '' + '","transporter_document_date":"' + '' + '","transportation_mode":"' +
+        /*EWayBillDetail."Transportation Mode"*/ Rec."Mode of Transport" + '","transportation_distance":"' + /*FORMAT(EWayBillDetail."Transport Distance")*/ '' + '","vehicle_number":"' +
         Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
         '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
         Location_."E-Mail" + '"}';
+
+        //******Below Code for Test
+        // Document_Date := FORMAT(Rec."Posting Date", 0, '<Day,2>/<Month,2>/<year4>');
+        // Headerdata := '{"access_token":"' + token + '","userGstin":"' + '05AAABB0639G1Z8' + '","supply_type":"' + Supply + '","sub_supply_type":"' + Subsupply +
+        // '","sub_supply_description":"' + SubSupplydescr + '","document_type":"' + DocumentType + '","document_number":"' + Rec."No." +
+        // '","document_date":"' + Document_Date + '","gstin_of_consignor":"' + '05AAABB0639G1Z8' + '","legal_name_of_consignor":"' + Location_.Name +
+        // '","address1_of_consignor":"' + Location_.Address + '","address2_of_consignor":"' + Location_."Address 2" + '","place_of_consignor":"' +
+        // Location_.City + '","pincode_of_consignor":"' + Location_."Post Code" + '","state_of_consignor":"' + State_.Description +
+        // '","actual_from_state_name":"' + State_.Description + '","gstin_of_consignee":"' + '05AAABC0181E1ZE' + '","legal_name_of_consignee":"' + recToLoc.Name +
+        // '","address1_of_consignee":"' + recToLoc.Address + '","address2_of_consignee":"' + recToLoc."Address 2" +
+        // '","place_of_consignee":"' + recToLoc.City + '","pincode_of_consignee":"' + recToLoc."Post Code" + '","state_of_supply":"' + StateCust.Description +
+        // '","actual_to_state_name":"' + StateCust.Description + '","transaction_type":"' + Rec."Transaction Type" + '","other_value":"' + '' +
+        // '","total_invoice_value":"' + FORMAT(TotalInvAmt) + '","taxable_amount":"' + FORMAT(TotaltaxableAmt1Total) + '","cgst_amount":"' +
+        // '0' + '","sgst_amount":"' + '0' + '","igst_amount":"' + FORMAT(TotalIGSTAmt) + '","cess_amount":"' +
+        // '0' + '","cess_nonadvol_value":"' + '0' + '","transporter_id":"' + '05AAABB0639G1Z8' + '","transporter_name":"' +
+        // Rec."Transport Vendor Name" + '","transporter_document_number":"' + '' + '","transporter_document_date":"' + '' + '","transportation_mode":"' +
+        // Rec."Mode of Transport" + '","transportation_distance":"' + FORMAT(Rec."Distance (Km)") + '","vehicle_number":"' +
+        // Rec."Vehicle No." + '","vehicle_type":"' + 'Regular' + '","generate_status":"' + '1' + '","data_source":"' + 'erp' + '","user_ref":"' + '' +
+        // '","location_code":"' + Location_.Code + '","eway_bill_status":"' + FORMAT(Rec."E-Way Bill Generate") + '","auto_print":"' + 'Y' + '","email":"' +
+        // Location_."E-Mail" + '"}';
         //MESSAGE(Headerdata);
         //MESSAGE(Linedata);
         // result := Ewaybill.GenerateEwaybill(GeneralLedgerSetup."EINV Base URL", token, Headerdata, Linedata);
@@ -427,14 +429,14 @@ pageextension 50605 Posted_Tra_ship_ext extends "Posted Transfer Shipment"
 
         JsonEinvObject.Add('baseURL', GeneralLedgerSetup."EINV Base URL");
         JsonEinvObject.Add('access_token', GeneralLedgerSetup."Access Token");
-        JsonEinvObject.Add('userGstin', '05AAABB0639G1Z8');
+        JsonEinvObject.Add('userGstin', Location_."GST Registration No.");
         JsonEinvObject.Add('supply_type', Supply);
         JsonEinvObject.Add('sub_supply_type', Subsupply);
         JsonEinvObject.Add('sub_supply_description', SubSupplydescr);
         JsonEinvObject.Add('document_type', DocumentType);
         JsonEinvObject.Add('document_number', Rec."No.");
         JsonEinvObject.Add('document_date', Document_Date);
-        JsonEinvObject.Add('gstin_of_consignor', '05AAABB0639G1Z8');
+        JsonEinvObject.Add('gstin_of_consignor', Location_."GST Registration No.");
         JsonEinvObject.Add('legal_name_of_consignor', Location_.Name);
         JsonEinvObject.Add('address1_of_consignor', Location_.Address);
         JsonEinvObject.Add('address2_of_consignor', Location_."Address 2");
@@ -442,7 +444,7 @@ pageextension 50605 Posted_Tra_ship_ext extends "Posted Transfer Shipment"
         JsonEinvObject.Add('pincode_of_consignor', Location_."Post Code");
         JsonEinvObject.Add('state_of_consignor', State_.Description);
         JsonEinvObject.Add('actual_from_state_name', State_.Description);
-        JsonEinvObject.Add('gstin_of_consignee', '05AAABC0181E1ZE');
+        JsonEinvObject.Add('gstin_of_consignee', recToLoc."GST Registration No.");
         JsonEinvObject.Add('legal_name_of_consignee', recToLoc.Name);
         JsonEinvObject.Add('address1_of_consignee', recToLoc.Address);
         JsonEinvObject.Add('address2_of_consignee', recToLoc."Address 2");
@@ -459,11 +461,11 @@ pageextension 50605 Posted_Tra_ship_ext extends "Posted Transfer Shipment"
         JsonEinvObject.Add('igst_amount', FORMAT(TotalIGSTAmt));
         JsonEinvObject.Add('cess_amount', FORMAT(0));
         JsonEinvObject.Add('cess_nonadvol_value', FORMAT(0));
-        JsonEinvObject.Add('transporter_id', '05AAABB0639G1Z8');
-        JsonEinvObject.Add('transporter_name', Rec."Transport Vendor Name");
+        JsonEinvObject.Add('transporter_id', EWayBillDetail."Transporter Id");
+        JsonEinvObject.Add('transporter_name', EWayBillDetail."Transporter Name");
         JsonEinvObject.Add('transporter_document_number', Rec."LR/RR No.");
         JsonEinvObject.Add('transporter_document_date', '');
-        JsonEinvObject.Add('transportation_mode', Rec."Transport Method");
+        JsonEinvObject.Add('transportation_mode', EWayBillDetail."Transportation Mode");
         JsonEinvObject.Add('transportation_distance', FORMAT(Rec."Distance (Km)"));
         JsonEinvObject.Add('vehicle_number', Rec."Vehicle No.");
         JsonEinvObject.Add('vehicle_type', 'Regular');
