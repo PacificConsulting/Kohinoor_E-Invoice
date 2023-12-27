@@ -6,7 +6,8 @@
             "request": "launch",
             "type": "al",
             "environmentType": "Sandbox",
-            "environmentName": "KohinoorSandbox",
+            //"environmentName": "KohinoorSandbox",
+            "environmentName": "KohinoorUAT",
             "tenant": "abc87ed0-4014-486f-afd8-1577c92442a6",
             "startupObjectId": 22,
             "startupObjectType": "Page",
@@ -14,7 +15,7 @@
             "launchBrowser": true,
             "enableLongRunningSqlStatements": true,
             "enableSqlInformationDebugger": true,
-            "schemaUpdateMode": "ForceSync"
+            //"schemaUpdateMode": "ForceSync"
         }
        
        

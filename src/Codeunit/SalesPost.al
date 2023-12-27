@@ -5,8 +5,11 @@ Codeunit 50651 SalesPostCU
     var
         SalesInvHdr: Record 112;
     begin
-        // if SalesInvHdr.get(SalesInvHdrNo) then
-        //     GenerateEInvoice(SalesInvHdr)
+        SalesInvHdr.Reset();
+        SalesInvHdr.SetRange("No.", SalesInvHdrNo);
+        if SalesInvHdr.FindFirst() then begin
+            GenerateEInvoice(SalesInvHdr)
+        end;
     end;
 
 
