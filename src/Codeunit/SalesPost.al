@@ -4,11 +4,25 @@ Codeunit 50651 SalesPostCU
     local procedure OnAfterPostSalesDoc(var SalesHeader: Record "Sales Header"; var GenJnlPostLine: Codeunit "Gen. Jnl.-Post Line"; SalesShptHdrNo: Code[20]; RetRcpHdrNo: Code[20]; SalesInvHdrNo: Code[20]; SalesCrMemoHdrNo: Code[20]; CommitIsSuppressed: Boolean; InvtPickPutaway: Boolean; var CustLedgerEntry: Record "Cust. Ledger Entry"; WhseShip: Boolean; WhseReceiv: Boolean; PreviewMode: Boolean)
     var
         SalesInvHdr: Record 112;
+        RecCustomer: Record Customer;
+        ShiptoAddress: Record "Ship-to Address";
+        SkipEinvoicing: Boolean;
     begin
+
+        Clear(SkipEinvoicing);
         SalesInvHdr.Reset();
         SalesInvHdr.SetRange("No.", SalesInvHdrNo);
         if SalesInvHdr.FindFirst() then begin
-            GenerateEInvoice(SalesInvHdr)
+            RecCustomer.Reset();
+            RecCustomer.SetRange("No.", SalesInvHdr."Sell-to Customer No.");
+            if RecCustomer.FindFirst() then begin
+                if (RecCustomer."GST Registration Type" = RecCustomer."GST Customer Type"::Unregistered) or (RecCustomer."GST Registration Type" = RecCustomer."GST Customer Type"::" ") then begin
+                    SkipEinvoicing := true;
+                end;
+            end;
+
+            if SkipEinvoicing = false then
+                GenerateEInvoice(SalesInvHdr)
         end;
     end;
 
@@ -153,7 +167,7 @@ Codeunit 50651 SalesPostCU
                 Natureofsupply := 'SEZWOP';
                 transactiondetails := Natureofsupply + '!' + 'N' + '!' + '' + '!' + 'N';
             END ELSE
-                transactiondetails := FORMAT(rec."Nature of Supply") + '!' + 'N' + '!' + '' + '!' + 'N';
+                transactiondetails := 'B2B' + '!' + 'N' + '!' + '' + '!' + 'N';
 
 
         Document_Date := FORMAT(rec."Posting Date", 0, '<Day,2>-<Month,2>-<year4>');

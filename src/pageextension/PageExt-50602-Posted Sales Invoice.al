@@ -322,8 +322,14 @@
             IF ExpCustomer."GST Customer Type" = ExpCustomer."GST Customer Type"::"SEZ Unit" THEN BEGIN
                 Natureofsupply := 'SEZWOP';
                 transactiondetails := Natureofsupply + '!' + 'N' + '!' + '' + '!' + 'N';
-            END ELSE
-                transactiondetails := FORMAT(rec."Nature of Supply") + '!' + 'N' + '!' + '' + '!' + 'N';
+            END ELSE begin
+                if ExpCustomer."GST Customer Type" = ExpCustomer."GST Customer Type"::Registered then begin
+                    transactiondetails := 'B2B' + '!' + 'N' + '!' + '' + '!' + 'N';
+                end else
+                    transactiondetails := 'B2C' + '!' + 'N' + '!' + '' + '!' + 'N';
+
+            end;
+
 
 
         Document_Date := FORMAT(rec."Posting Date", 0, '<Day,2>-<Month,2>-<year4>');
